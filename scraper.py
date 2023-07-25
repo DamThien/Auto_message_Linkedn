@@ -1,7 +1,11 @@
-# Import libraries and packages for the project 
+# Import libraries and packages for the project
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from bs4 import BeautifulSoup
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from selenium.webdriver.chrome.service import Service
 from time import sleep
 import csv
 print('- Finish importing packages')
@@ -25,88 +29,69 @@ print('- Finish importing the login credentials')
 sleep(2)
 
 # Task 1.2: Key in login credentials
-email_field = driver.find_element_by_id('username')
-email_field.send_keys(username)
+email_field = driver.find_element(By.ID, 'username').send_keys(username)
 print('- Finish keying in email')
-sleep(3)
+sleep(1)
 
-password_field = driver.find_element_by_name('session_password')
-password_field.send_keys(password)
+password_field = driver.find_element(
+    By.NAME, 'session_password').send_keys(password)
 print('- Finish keying in password')
-sleep(2)
+sleep(1)
 
 # Task 1.2: Click the Login button
-signin_field = driver.find_element_by_xpath('//*[@id="organic-div"]/form/div[3]/button')
+signin_field = driver.find_element(
+    By.XPATH, '//*[@id="organic-div"]/form/div[3]/button')
 signin_field.click()
-sleep(3)
-
 print('- Finish Task 1: Login to Linkedin')
-
-# Task 2: Search for the profile we want to crawl
-# Task 2.1: Locate the search bar element
-search_field = driver.find_element_by_xpath('//*[@class="search-global-typeahead__input always-show-placeholder"]')
-# Task 2.2: Input the search query to the search bar
-search_query = input('What profile do you want to scrape? ')
-search_field.send_keys(search_query)
-
-# Task 2.3: Search
-search_field.send_keys(Keys.RETURN)
-
-print('- Finish Task 2: Search for profiles')
+sleep(10)
 
 
-# Task 3: Scrape the URLs of the profiles
-# Task 3.1: Write a function to extract the URLs of one page
-def GetURL():
-    page_source = BeautifulSoup(driver.page_source)
-    profiles = page_source.find_all('a', class_ = 'app-aware-link') #('a', class_ = 'search-result__result-link ember-view')
-    all_profile_URL = []
-    for profile in profiles:
-        # profile_ID = profile.get('href')
-        # profile_URL = "https://www.linkedin.com" + profile_ID
-        profile_URL = profile.get('href')
-        if profile_URL not in all_profile_URL:
-            all_profile_URL.append(profile_URL)
-    return all_profile_URL
+# Đường dẫn đến trang group của bạn
+group_url = "https://www.linkedin.com/groups/14285566/manage/membership/members/"
+# Truy cập vào trang group của bạn
+driver.get(group_url)
+sleep(5)
+print('Truy cập vào trang group của bạn')
+# Định vị phần tử chứa danh sách các thành viên trong nhóm
 
+member_names = []
+for abcsd in driver.find_elements(By.CSS_SELECTOR,".artdeco-entity-lockup__title.ember-view"):
+    print(abcsd.text)
+    member_names.append(abcsd.text)
+print("Định vị phần tử chứa danh sách các thành viên trong nhóm")
 
-# Task 3.2: Navigate through many page, and extract the profile URLs of each page
-input_page = int(input('How many pages you want to scrape: '))
-URLs_all_page = []
-for page in range(input_page):
-    URLs_one_page = GetURL()
-    sleep(2)
-    driver.execute_script('window.scrollTo(0, document.body.scrollHeight);') #scroll to the end of the page
-    sleep(3)
-    next_button = driver.find_element_by_class_name("artdeco-pagination__button--next")
-    driver.execute_script("arguments[0].click();", next_button)
-    URLs_all_page = URLs_all_page + URLs_one_page
-    sleep(2)
+# Gửi tin nhắn cho từng thành viên
+for member in member_names:
+    # Định vị phần tử chứa tên của thành viên.
+    member_container = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, '.artdeco-entity-lockup__title.ember-view'))
+    )
+    print(member_container)
 
-print('- Finish Task 3: Scrape the URLs')
+    # Lấy tên của thành viên từ phần tử đã định vị.
+    member_name = member
+    print(member)
+    message = open('message.txt')
+    # Tạo nội dung tin nhắn với tên thành viên
+    customized_message = message.read()
+    send_message = "Hi " + member.split()[0] + ",\n" + customized_message
+    print(customized_message)
+    print(send_message)
+    
+    # Tìm ô tin nhắn và gửi nội dung tin nhắn
+    message_box_click = driver.find_element(
+        (By.XPATH, "//*[@aria-label='Message {member}']"))
+    message_box_click.click()
+    
+    # message_box = WebDriverWait(driver, 10).until(
+    #     EC.presence_of_element_located(
+    #         (By.CSS_SELECTOR, 'artdeco-button__text'))
+    # )
+    # message_box.send_keys(customized_message)
+    # message_box.send_keys(Keys.RETURN)
+    # sleep(2)
 
-
-# Task 4: Scrape the data of 1 Linkedin profile, and write the data to a .CSV file
-with open('output.csv', 'w',  newline = '') as file_output:
-    headers = ['Name', 'Job Title', 'Location', 'URL']
-    writer = csv.DictWriter(file_output, delimiter=',', lineterminator='\n',fieldnames=headers)
-    writer.writeheader()
-    for linkedin_URL in URLs_all_page:
-        driver.get(linkedin_URL)
-        print('- Accessing profile: ', linkedin_URL)
-        sleep(3)
-        page_source = BeautifulSoup(driver.page_source, "html.parser")
-        info_div = page_source.find('div',{'class':'flex-1 mr5'})
-        try:
-            name = info_div.find('li', class_='inline t-24 t-black t-normal break-words').get_text().strip() #Remove unnecessary characters 
-            print('--- Profile name is: ', name)
-            location = info_div.find('li', class_='t-16 t-black t-normal inline-block').get_text().strip() #Remove unnecessary characters 
-            print('--- Profile location is: ', location)
-            title = info_div.find('h2', class_='mt1 t-18 t-black t-normal break-words').get_text().strip()
-            print('--- Profile title is: ', title)
-            writer.writerow({headers[0]:name, headers[1]:location, headers[2]:title, headers[3]:linkedin_URL})
-            print('\n')
-        except:
-            pass
-
-print('Mission Completed!')
+# # Đóng trình duyệt
+# driver.quit()
+# print('Mission Completed!')
