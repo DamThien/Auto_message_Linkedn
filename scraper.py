@@ -4,8 +4,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 
-from selenium.webdriver.chrome.service import Service
 from time import sleep
 import csv
 print('- Finish importing packages')
@@ -26,7 +26,7 @@ line = credential.readlines()
 username = line[0]
 password = line[1]
 print('- Finish importing the login credentials')
-sleep(2)
+sleep(1)
 
 # Task 1.2: Key in login credentials
 email_field = driver.find_element(By.ID, 'username').send_keys(username)
@@ -43,7 +43,7 @@ signin_field = driver.find_element(
     By.XPATH, '//*[@id="organic-div"]/form/div[3]/button')
 signin_field.click()
 print('- Finish Task 1: Login to Linkedin')
-sleep(10)
+sleep(14)
 
 
 # Đường dẫn đến trang group của bạn
@@ -68,30 +68,44 @@ for member in member_names:
             (By.CSS_SELECTOR, '.artdeco-entity-lockup__title.ember-view'))
     )
     print(member_container)
-
     # Lấy tên của thành viên từ phần tử đã định vị.
     member_name = member
-    print(member)
-    message = open('message.txt')
-    # Tạo nội dung tin nhắn với tên thành viên
-    customized_message = message.read()
-    send_message = "Hi " + member.split()[0] + ",\n" + customized_message
-    print(customized_message)
-    print(send_message)
-    
-    # Tìm ô tin nhắn và gửi nội dung tin nhắn
-    message_box_click = driver.find_element(
-        (By.XPATH, "//*[@aria-label='Message {member}']"))
-    message_box_click.click()
-    
-    # message_box = WebDriverWait(driver, 10).until(
-    #     EC.presence_of_element_located(
-    #         (By.CSS_SELECTOR, 'artdeco-button__text'))
-    # )
-    # message_box.send_keys(customized_message)
-    # message_box.send_keys(Keys.RETURN)
-    # sleep(2)
 
-# # Đóng trình duyệt
-# driver.quit()
-# print('Mission Completed!')
+    # Tạo nội dung tin nhắn với tên thành viên
+    message = open('message.txt')
+    customized_message = message.read()
+    send_message = "Hi " + member_name.split()[0] + ",\n" + customized_message
+    
+    # Tìm ô tin nhắn
+    message_box_click = driver.find_element(
+    By.XPATH, f"//*[@aria-label='Message {member}']")
+
+    # Move the mouse cursor to the element and then click
+    action = ActionChains(driver)
+    action.move_to_element(message_box_click).click().perform()
+
+    # Wait for a short duration (adjust this sleep time if needed)
+    sleep(1)
+
+    # Find the input field for composing the message
+    message_input = WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located(
+        (By.CSS_SELECTOR, '.msg-form__contenteditable'))
+    )
+
+    # Paste the customized message into the input field
+    action = ActionChains(driver)
+    action.click(message_input).send_keys(send_message).perform()
+
+    # Wait for a short duration (adjust this sleep time if needed)
+    sleep(3)
+
+    send_click = driver.find_element(
+        By.CSS_SELECTOR, "msg-form__send-button artdeco-button artdeco-button--1")
+    action = ActionChains(driver)
+    action.move_to_element(send_click).click().perform()
+    
+    sleep(3)
+# Đóng trình duyệt
+driver.quit()
+print('Mission Completed!')
