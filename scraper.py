@@ -7,18 +7,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
 from time import sleep
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 import csv
 print('- Finish importing packages')
 
-# Task 1: Login to Linkedin
-
-# Task 1.1: Open Chrome and Access Linkedin login site
 driver = webdriver.Chrome()
-sleep(2)
+sleep(1)
 url = 'https://www.linkedin.com/login'
 driver.get(url)
 print('- Finish initializing a driver')
-sleep(2)
+sleep(1)
 
 # Task 1.2: Import username and password
 credential = open('credentials.txt')
@@ -43,7 +42,7 @@ signin_field = driver.find_element(
     By.XPATH, '//*[@id="organic-div"]/form/div[3]/button')
 signin_field.click()
 print('- Finish Task 1: Login to Linkedin')
-sleep(14)
+sleep(15)
 
 
 # Đường dẫn đến trang group của bạn
@@ -70,16 +69,19 @@ for member in member_names:
     print(member_container)
     # Lấy tên của thành viên từ phần tử đã định vị.
     member_name = member
-
-    # Tạo nội dung tin nhắn với tên thành viên
+    print(member)
     message = open('message.txt')
-    customized_message = message.read()
-    send_message = "Hi " + member_name.split()[0] + ",\n" + customized_message
-    
+    # Read the message from the file with 'utf-8' encoding
+    with open('message.txt', encoding='utf-8') as message_file:
+        customized_message = message_file.read()
+    send_message = "Hi " + member.split()[0] + ",\n" + customized_message
+    print(customized_message)
+    print(send_message)
+
     # Tìm ô tin nhắn
     message_box_click = driver.find_element(
-    By.XPATH, f"//*[@aria-label='Message {member}']")
-
+        By.XPATH, f"//*[@aria-label='Message {member}']")
+    
     # Move the mouse cursor to the element and then click
     action = ActionChains(driver)
     action.move_to_element(message_box_click).click().perform()
@@ -89,8 +91,7 @@ for member in member_names:
 
     # Find the input field for composing the message
     message_input = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located(
-        (By.CSS_SELECTOR, '.msg-form__contenteditable'))
+        EC.presence_of_element_located((By.CSS_SELECTOR, '.msg-form__contenteditable'))
     )
 
     # Paste the customized message into the input field
@@ -98,14 +99,32 @@ for member in member_names:
     action.click(message_input).send_keys(send_message).perform()
 
     # Wait for a short duration (adjust this sleep time if needed)
-    sleep(3)
-
+    sleep(1)
+    
+    # Find the "Send" button and click it
     send_click = driver.find_element(
-        By.CSS_SELECTOR, "msg-form__send-button artdeco-button artdeco-button--1")
+        By.CSS_SELECTOR, ".msg-form__send-button.artdeco-button.artdeco-button--1")
     action = ActionChains(driver)
     action.move_to_element(send_click).click().perform()
-    
+
+    # Wait for a short duration (adjust this sleep time if needed)
     sleep(3)
-# Đóng trình duyệt
-driver.quit()
-print('Mission Completed!')
+
+    # Go back to the main group members page after sending the message
+    driver.get(group_url)
+    sleep(5)
+
+    # Find the next member element in the list
+    next_member = driver.find_element(
+        By.XPATH, f"//*[text()='{member}']/ancestor::li/following-sibling::li//button[@aria-label='Message']")
+
+    # Scroll the element into view
+    driver.execute_script("arguments[0].scrollIntoView(true);", next_member)
+
+    # Click on the next member's message button
+    next_member.click()
+
+    # Wait for a short duration (adjust this sleep time if needed)
+    sleep(3)
+
+    # 2222
