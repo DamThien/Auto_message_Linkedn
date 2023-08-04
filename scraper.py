@@ -1,4 +1,3 @@
-import csv
 from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
 from selenium.webdriver.chrome.service import Service
@@ -48,16 +47,12 @@ signin_field.click()
 print('- Finish Task 1: Login to Linkedin')
 sleep(5)
 
-# Đường dẫn đến trang group của bạn
-# group_url = "https://www.linkedin.com/groups/14285566/manage/membership/members/"
-# Truy cập vào trang group của bạn
+# Visit your group page
 driver.get(group_url)
 sleep(5)
-print('Truy cập vào trang group của bạn')
+print('Go to your group page')
 
-# Hàm để kiểm tra xem còn nút "Next" hay không
-
-
+# Function to check if "Next" button is still available
 def has_next_page():
     try:
         driver.find_element(
@@ -66,9 +61,7 @@ def has_next_page():
     except:
         return False
 
-# Hàm để chuyển sang trang kế tiếp
-
-
+# Function to go to next page
 def go_to_next_page():
     try:
         next_button = driver.find_element(
@@ -77,34 +70,34 @@ def go_to_next_page():
         sleep(5)
     except:
         print('No next page')
-# Định vị phần tử chứa danh sách các thành viên trong nhóm
 
-
-# Get your LinkedIn account's name
+# List LinkedIn account who didn't want message
 didntsent = ["Gokula Kandaswamy",
              "JONATHAN ARNOLD~ACA 🇱🇰, FCCA 🇬🇧, CPA 🇦🇺🇨🇦, (Triple Chartered Accountant and KPMG SoQM Manager) BSc. (Hons)🎓l Award-winning Auditor🏆l Musician🎸",
              "Tal Cohen",
              your_name
              ]
+# Create array who can not send
 cannotsends = []
-# Gửi tin nhắn cho từng thành viên trên tất cả các trang
+# The loop to message
 while True:
     member_names = []
     for abcsd in driver.find_elements(By.CSS_SELECTOR, ".artdeco-entity-lockup__title.ember-view"):
         print(abcsd.text)
         member_names.append(abcsd.text)
-    print("Định vị phần tử chứa danh sách các thành viên trong nhóm")
+    print("Locate the list of group members")
     for member in member_names:
+        # Find the button to turn off the message who is replying
         buttons = driver.find_elements(
             By.XPATH, '//button[@class="msg-overlay-bubble-header__control artdeco-button artdeco-button--circle artdeco-button--1 artdeco-button--primary ember-view"]')
-        # Duyệt qua từng phần tử và thực hiện click
+        # Iterate over each element and do a click
         for button in buttons:
             button.click()
         # Skip sending a message to your own account
         if member in didntsent:
             continue
         try:
-            # Tìm ô tin nhắn trên trang group
+            # Find the message button on the group page
             message_box_click = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located(
                     (By.XPATH, f'//*[@aria-label="Message {member}"]'))
@@ -159,9 +152,9 @@ while True:
                     (By.CSS_SELECTOR, ".msg-form__send-button.artdeco-button.artdeco-button--1"))
             )
             send_button.click()
-
             # Wait for a short duration (adjust this sleep time if needed)
             sleep(2)
+
             exception_occurred = True
         except Exception as e:
             print(f"Error sending message to {member}: {e}")
@@ -184,8 +177,10 @@ while True:
         break
     go_to_next_page()
 
-# Kết thúc khi đã gửi tin nhắn cho toàn bộ thành viên trong nhóm
+# Ends when the message has been sent to all members of the group
 print("Sent to all")
 
-
-# when running this bot please change zoom in your settings = 80%
+# Print a list of people who can't message them yet
+print("List of who cannot send\n")
+for cantsend in cannotsends:
+    print(cantsend,"\n")
