@@ -27,7 +27,7 @@ line = importMember.readlines()
 username = line[0].strip()
 password = line[1].strip()
 group_url = line[2].strip()  # New entry for group_url
-# your_name = line[3].strip()  # New entry for your_name
+your_name = line[3].strip()  # New entry for your_name
 print('- Finish importing the login')
 sleep(2)
 
@@ -57,6 +57,7 @@ print('Truy cập vào trang group của bạn')
 
 # Hàm để kiểm tra xem còn nút "Next" hay không
 
+
 def has_next_page():
     try:
         driver.find_element(
@@ -80,9 +81,12 @@ def go_to_next_page():
 
 
 # Get your LinkedIn account's name
-didntsent = ["Ian Lashley", "Marcel Scheel", "Mannat Sharma",
-             "Nishchay Munot", "Norhan Mohamed Fawzy", "Kyra Alcivar"]
-
+didntsent = ["Gokula Kandaswamy",
+             "JONATHAN ARNOLD~ACA 🇱🇰, FCCA 🇬🇧, CPA 🇦🇺🇨🇦, (Triple Chartered Accountant and KPMG SoQM Manager) BSc. (Hons)🎓l Award-winning Auditor🏆l Musician🎸",
+             "Tal Cohen",
+             your_name
+             ]
+cannotsends = []
 # Gửi tin nhắn cho từng thành viên trên tất cả các trang
 while True:
     member_names = []
@@ -91,6 +95,11 @@ while True:
         member_names.append(abcsd.text)
     print("Định vị phần tử chứa danh sách các thành viên trong nhóm")
     for member in member_names:
+        buttons = driver.find_elements(
+            By.XPATH, '//button[@class="msg-overlay-bubble-header__control artdeco-button artdeco-button--circle artdeco-button--1 artdeco-button--primary ember-view"]')
+        # Duyệt qua từng phần tử và thực hiện click
+        for button in buttons:
+            button.click()
         # Skip sending a message to your own account
         if member in didntsent:
             continue
@@ -100,11 +109,11 @@ while True:
                 EC.presence_of_element_located(
                     (By.XPATH, f'//*[@aria-label="Message {member}"]'))
             )
-            
+
             # Move the mouse cursor to the element and then click
             action = ActionChains(driver)
             action.move_to_element(message_box_click).click().perform()
-            print("Click chat cho ",member)
+            print("Click chat cho ", member)
             # Wait for a short duration (adjust this sleep time if needed)
             sleep(1)
 
@@ -117,19 +126,20 @@ while True:
             # Compose your customized message for the specific member
             message = open('content.txt')
             # Remove specified prefixes from the member name
-            #
-            prefixes = ["CPE", "Eng.", "Md.", "CA", "FCCA", "CMA"]
+            prefixes = ["CPE", "Eng.", "Md.", "CMA",
+                        
+                        "MSC CPA", "CPA", "FCCA", "CA", "CPA, FMVA"]
             for prefix in prefixes:
                 if member.startswith(prefix):
-                    firstname = member[len(prefix):].strip()
+                    full_name = member[len(prefix):].strip()
                     break
-            #
+                else:
+                    full_name = member
             with open('content.txt', encoding='utf-8') as message_file:
                 customized_message = message_file.read()
-                firstname = member.split()[0]
-            send_message = str("Hi " + \
-                firstname.capitalize() + ",\n" + customized_message)
-
+                firstname = full_name.split()[0]
+            send_message = str("Hi " +
+                               firstname.capitalize() + ",\n" + customized_message)
             # Paste the customized message into the input field
             pyperclip.copy(send_message)
 
@@ -138,7 +148,8 @@ while True:
 
             # Simulate paste action (Ctrl + V) to paste content from clipboard
             action = ActionChains(driver)
-            action.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+            action.key_down(Keys.CONTROL).send_keys(
+                'v').key_up(Keys.CONTROL).perform()
             # Wait for a short duration (adjust this sleep time if needed)
             sleep(1)
 
@@ -154,6 +165,7 @@ while True:
             exception_occurred = True
         except Exception as e:
             print(f"Error sending message to {member}: {e}")
+            cannotsends.append(member)
             exception_occurred = False
             continue
         finally:
