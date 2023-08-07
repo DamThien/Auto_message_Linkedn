@@ -36,3 +36,9 @@ for member in member_names:
         continue
     # finally:
     #     print("OK")
+b = 2
+a = 2
+
+b+=1
+a=a+1
+print(b,a)

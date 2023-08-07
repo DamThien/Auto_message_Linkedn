@@ -6,7 +6,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
+from urllib.parse import urljoin
 import pyperclip
+import openpyxl
 
 print('- Finish importing packages')
 
@@ -18,15 +20,15 @@ print('- Finish initializing a driver')
 sleep(1)
 
 # Task 1.2: Import username and password
-importMember = open('thien.txt')
+importMember = open('importMember.txt')
 line = importMember.readlines()
-# username = line[0]
-# password = line[1]
 # Strip removes leading/trailing spaces and newline characters
 username = line[0].strip()
 password = line[1].strip()
 group_url = line[2].strip()  # New entry for group_url
 your_name = line[3].strip()  # New entry for your_name
+page = int(line[4].strip())   # Start page
+end_page = int(line[5].strip())  # End page
 print('- Finish importing the login')
 sleep(2)
 
@@ -47,10 +49,14 @@ signin_field.click()
 print('- Finish Task 1: Login to Linkedin')
 sleep(5)
 
+#  Create page url
+page_url = urljoin(group_url, f"?page={page}")
+
 # Visit your group page
-driver.get(group_url)
+driver.get(page_url)
 sleep(5)
 print('Go to your group page')
+
 
 # Function to check if "Next" button is still available
 def has_next_page():
@@ -75,12 +81,15 @@ def go_to_next_page():
 didntsent = ["Gokula Kandaswamy",
              "JONATHAN ARNOLD~ACA 🇱🇰, FCCA 🇬🇧, CPA 🇦🇺🇨🇦, (Triple Chartered Accountant and KPMG SoQM Manager) BSc. (Hons)🎓l Award-winning Auditor🏆l Musician🎸",
              "Tal Cohen",
-             your_name
+             your_name,
+             "emmanuel mawejje",
+             "Manisha Dayma"
              ]
 # Create array who can not send
 cannotsends = []
+
 # The loop to message
-while True:
+while page <= end_page:
     member_names = []
     for abcsd in driver.find_elements(By.CSS_SELECTOR, ".artdeco-entity-lockup__title.ember-view"):
         print(abcsd.text)
@@ -89,7 +98,7 @@ while True:
     for member in member_names:
         # Find the button to turn off the message who is replying
         buttons = driver.find_elements(
-            By.XPATH, '//button[@class="msg-overlay-bubble-header__control artdeco-button artdeco-button--circle artdeco-button--1 artdeco-button--primary ember-view"]')
+             By.XPATH, '//button[@class="msg-overlay-bubble-header__control artdeco-button artdeco-button--circle artdeco-button--1 artdeco-button--primary ember-view"]')
         # Iterate over each element and do a click
         for button in buttons:
             button.click()
@@ -106,7 +115,6 @@ while True:
             # Move the mouse cursor to the element and then click
             action = ActionChains(driver)
             action.move_to_element(message_box_click).click().perform()
-            print("Click chat cho ", member)
             # Wait for a short duration (adjust this sleep time if needed)
             sleep(1)
 
@@ -119,9 +127,8 @@ while True:
             # Compose your customized message for the specific member
             message = open('content.txt')
             # Remove specified prefixes from the member name
-            prefixes = ["CPE", "Eng.", "Md.", "CMA",
-                        
-                        "MSC CPA", "CPA", "FCCA", "CA", "CPA, FMVA"]
+            prefixes = ["CPE", "Eng.", "Md.", "Md", "CMA",
+                        "MSC CPA", "CPA", "FCCA", "CA", "CPA, FMVA", "CS", "Dr."]
             for prefix in prefixes:
                 if member.startswith(prefix):
                     full_name = member[len(prefix):].strip()
@@ -153,7 +160,7 @@ while True:
             )
             send_button.click()
             # Wait for a short duration (adjust this sleep time if needed)
-            sleep(2)
+            sleep(1)
 
             exception_occurred = True
         except Exception as e:
@@ -169,18 +176,26 @@ while True:
                 )
                 close_button.click()
                 print("Sent to", member)
-                sleep(2)
+                sleep(1)
             else:
                 print("Error")
 
     if not has_next_page():
         break
     go_to_next_page()
-
+    page += 1
 # Ends when the message has been sent to all members of the group
 print("Sent to all")
 
 # Print a list of people who can't message them yet
 print("List of who cannot send\n")
 for cantsend in cannotsends:
-    print(cantsend,"\n")
+    print(cantsend, "\n")
+    file_path = "cannotsend.txt"
+
+# Ghi danh sách vào tệp
+with open(file_path, "w", encoding='utf-8') as file:
+    file.write("List of who cannot send:\n")
+    for cantsend in cannotsends:
+        file.write(cantsend + "\n")
+print("List of who cannot send has been saved to", file_path)
